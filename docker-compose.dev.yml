@@ -1,0 +1,148 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: circuitgpt-nginx
+    ports:
+      - "${NGINX_PORT:-80}:80"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    networks:
+      - circuit-network
+    restart: always
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile.dev
+    container_name: circuitgpt-frontend
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost/api/v1}
+    volumes:
+      - ./apps/frontend:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    networks:
+      - circuit-network
+    restart: always
+
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile.dev
+    container_name: circuitgpt-backend
+    volumes:
+      - ./apps/backend:/app
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - circuit-network
+    restart: always
+
+  db:
+    image: postgres:16-alpine
+    container_name: circuitgpt-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-circuitgpt}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-circuitsecurepass}
+      POSTGRES_DB: ${POSTGRES_DB:-circuitgpt_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-circuitgpt} -d ${POSTGRES_DB:-circuitgpt_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - circuit-network
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    container_name: circuitgpt-redis
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - redis_data:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - circuit-network
+    restart: always
+
+  minio:
+    image: minio/minio:latest
+    container_name: circuitgpt-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadminsecure}
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - circuit-network
+    restart: always
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: circuitgpt-qdrant
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - circuit-network
+    restart: always
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  qdrant_data:
+
+networks:
+  circuit-network:
+    name: circuit-network
+    driver: bridge
