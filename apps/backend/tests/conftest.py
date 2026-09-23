@@ -24,17 +24,31 @@ TestingSessionLocal = async_sessionmaker(
     expire_on_commit=False
 )
 
+import fnmatch
+
 class MockRedis:
-    """Mock Redis client for test suite execution."""
+    """Mock Redis client for test suite execution supporting Lua script eval, scans, and TTLs."""
     def __init__(self):
         self.store = {}
+        self.ttls = {}
 
     async def get(self, key: str):
         return self.store.get(key)
 
     async def set(self, key: str, value: str, ex: int = None):
-        self.store[key] = value
+        self.store[key] = str(value)
+        if ex:
+            self.ttls[key] = ex
         return True
+
+    async def delete(self, *keys: str):
+        count = 0
+        for k in keys:
+            if k in self.store:
+                del self.store[k]
+                self.ttls.pop(k, None)
+                count += 1
+        return count
 
     async def ping(self):
         return True
@@ -57,12 +71,38 @@ class MockRedis:
         return val
 
     async def expire(self, key: str, seconds: int):
+        self.ttls[key] = seconds
         return True
+
+    async def eval(self, script: str, numkeys: int, *keys_and_args):
+        # Lua script emulation for rate limiter: INCR + EXPIRE
+        if numkeys >= 1 and len(keys_and_args) >= 1:
+            key = keys_and_args[0]
+            expire_sec = keys_and_args[1] if len(keys_and_args) > 1 else 60
+            val = int(self.store.get(key, 0)) + 1
+            self.store[key] = str(val)
+            if val == 1:
+                self.ttls[key] = expire_sec
+            return val
+        return 1
+
+    async def scan_iter(self, match: str = "*", count: int = 100):
+        for key in list(self.store.keys()):
+            if fnmatch.fnmatch(key, match):
+                yield key
+
+    async def keys(self, pattern: str = "*"):
+        return [k for k in self.store.keys() if fnmatch.fnmatch(k, pattern)]
 
     async def execute(self):
         return [True]
 
+    def clear(self):
+        self.store.clear()
+        self.ttls.clear()
+
 mock_redis_client = MockRedis()
+
 
 async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
     async with TestingSessionLocal() as session:

@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
 from app.core.config import settings
+from app.core.cache import cache_service
 from app.models.upload import ResourceType, Upload
 from app.models.user import User
 from app.repositories.upload import UploadRepository
@@ -211,6 +212,9 @@ async def upload_resource(
         upload.status = UploadStatus.INDEXED
         await db.commit()
         await db.refresh(upload)
+
+        # Invalidate search cache on new resource upload
+        await cache_service.delete_pattern("cache:search:*")
     except Exception as exc:
         print(f"[Uploads] RAG ingestion failed for {upload.id}: {exc}")
         upload.status = UploadStatus.FAILED
@@ -310,7 +314,7 @@ async def delete_resource(
 ):
     """
     Delete a resource. Only the uploader can delete their own resource.
-    Removes from MinIO and PostgreSQL.
+    Removes from MinIO and PostgreSQL, and invalidates search caches.
     """
     repo = UploadRepository.from_session(db)
     upload = await repo.get_owned_by_user(upload_id, current_user.id)
@@ -322,9 +326,13 @@ async def delete_resource(
     # Delete from DB first (inside the managed transaction)
     await repo.delete(upload)
 
+    # Invalidate search cache on resource deletion
+    await cache_service.delete_pattern("cache:search:*")
+
     # Then delete from MinIO (best-effort)
     storage = StorageService()
     try:
         await storage.delete_file(minio_key)
     except Exception:
         pass  # Object may already be gone; DB is authoritative
+
