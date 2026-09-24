@@ -1,9 +1,13 @@
 import uuid
 import enum
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from sqlalchemy import String, BigInteger, ForeignKey, Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import BaseModel
+
+if TYPE_CHECKING:
+    from app.models.user import User
+
 
 
 class ResourceType(str, enum.Enum):
@@ -28,10 +32,6 @@ class Upload(BaseModel):
     uploaded_by_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    # Optional FK to courses table (kept for backwards compat, nullable)
-    course_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        ForeignKey("courses.id", ondelete="SET NULL"), nullable=True, index=True
-    )
     # Subject slug, e.g. "power-system", "power-electronics"
     subject_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     # Resource category
@@ -55,7 +55,6 @@ class Upload(BaseModel):
 
     # Relationships
     uploaded_by: Mapped["User"] = relationship(back_populates="uploads")
-    course: Mapped[Optional["Course"]] = relationship(back_populates="uploads")
 
     def __repr__(self) -> str:
         return f"<Upload id={self.id} original_name={self.original_name} type={self.resource_type}>"

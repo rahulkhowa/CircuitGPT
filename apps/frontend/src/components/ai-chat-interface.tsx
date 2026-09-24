@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+
 import {
   Bot,
   ArrowUp,
@@ -70,7 +71,7 @@ export function AiChatInterface({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost/api/v1";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
   const getEffectiveToken = () => {
     if (authToken) return authToken;
@@ -96,31 +97,68 @@ export function AiChatInterface({
     "Derive equal area criterion for power systems.",
   ];
 
+  const loadConversations = useCallback(async () => {
+    try {
+      const token = getEffectiveToken();
+      const res = await fetch(`${API_URL}/chat/conversations?system_id=${systemId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setThreads(
+          data.map((c: any) => ({
+            id: c.session_id,
+            title: c.title,
+            date: "Active",
+            messagesCount: c.message_count,
+          }))
+        );
+      }
+    } catch (err) {
+      console.warn("Could not load conversations:", err);
+    }
+  }, [systemId, API_URL, authToken]);
+
   // Fetch active conversations on load
   useEffect(() => {
-    async function loadConversations() {
+    loadConversations();
+  }, [loadConversations]);
+
+  // Fetch conversation messages when activeThreadId changes
+  useEffect(() => {
+    if (!activeThreadId) return;
+
+    let isMounted = true;
+    async function loadThreadMessages() {
+      const token = getEffectiveToken();
       try {
-        const token = getEffectiveToken();
-        const res = await fetch(`${API_URL}/chat/conversations?system_id=${systemId}`, {
+        const res = await fetch(`${API_URL}/chat/conversations/${activeThreadId}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
-        if (res.ok) {
+        if (res.ok && isMounted) {
           const data = await res.json();
-          setThreads(
-            data.map((c: any) => ({
-              id: c.session_id,
-              title: c.title,
-              date: "Active",
-              messagesCount: c.message_count,
-            }))
-          );
+          if (Array.isArray(data) && data.length > 0) {
+            setMessages(
+              data.map((m: any) => ({
+                id: m.id,
+                sender: m.role === "user" ? "user" : "ai",
+                text: m.content,
+                timestamp: new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                citations: m.context_source ? [{ source: m.context_source }] : undefined,
+              }))
+            );
+          }
         }
       } catch (err) {
-        console.warn("Could not load conversations:", err);
+        console.warn("Could not load thread messages:", err);
       }
     }
-    loadConversations();
-  }, [systemId, API_URL, authToken]);
+    loadThreadMessages();
+    return () => {
+      isMounted = false;
+    };
+  }, [activeThreadId, API_URL]);
+
 
   // Handle message submission with streaming support
   const handleSend = async (textToSend?: string) => {
@@ -171,7 +209,9 @@ export function AiChatInterface({
         citations: data.citations,
       };
       setMessages((prev) => [...prev, aiResponse]);
+      loadConversations();
     } catch (err: any) {
+
       if (err.name === "AbortError") {
         setMessages((prev) => [
           ...prev,

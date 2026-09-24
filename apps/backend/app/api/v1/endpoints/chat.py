@@ -48,6 +48,14 @@ class ConversationOut(BaseModel):
     message_count: int
 
 
+class ChatMessageOut(BaseModel):
+    id: str
+    role: str
+    content: str
+    context_source: Optional[str] = None
+    created_at: str
+
+
 @router.post("", response_model=ChatResponse, status_code=status.HTTP_200_OK)
 async def chat_with_ai(
     payload: ChatRequest,
@@ -55,7 +63,8 @@ async def chat_with_ai(
     current_user: Optional[User] = Depends(get_optional_current_user),
 ):
     """
-    Agentic System-Scoped AI Chat endpoint using NVIDIA Nemotron Ultra + RAG + User Memory.
+    Agentic System-Scoped AI Chat endpoint using NVIDIA Nemotron Ultra + RAG + Multi-Turn Memory.
+    Manages context window to prevent token overflow while preserving continuous dialogue.
     """
     user_id = str(current_user.id) if current_user else "anonymous"
     system_id = payload.system_id or payload.subject_code or "general"
@@ -123,6 +132,7 @@ async def chat_with_ai(
 
     # 2. User + System Memory Retrieval
     memories = []
+    history = []
     if current_user:
         stmt = (
             select(Memory)
@@ -133,10 +143,24 @@ async def chat_with_ai(
         mem_res = await db.execute(stmt)
         memories = [{"key": m.key, "value": m.value} for m in mem_res.scalars().all()]
 
+        # Multi-turn conversational continuity: fetch past messages for this session
+        hist_stmt = (
+            select(ChatHistory)
+            .where(ChatHistory.user_id == current_user.id)
+            .where(ChatHistory.session_id == session_id)
+            .order_by(ChatHistory.created_at.asc())
+        )
+        hist_res = await db.execute(hist_stmt)
+        past_msgs = hist_res.scalars().all()
+        max_msgs = getattr(settings, "AI_MAX_RECENT_MESSAGES", 20)
+        recent_past = past_msgs[-max_msgs:] if len(past_msgs) > max_msgs else past_msgs
+        history = [{"role": m.role, "content": m.content} for m in recent_past]
+
     context = {
         "docs": docs,
         "memories": memories,
         "citations": citations,
+        "history": history,
         "system_id": system_id,
     }
 
@@ -180,10 +204,11 @@ async def chat_stream_with_ai(
     current_user: Optional[User] = Depends(get_optional_current_user),
 ):
     """
-    Server-Sent Events (SSE) real-time streaming endpoint for Nemotron Ultra.
+    Server-Sent Events (SSE) real-time streaming endpoint for Nemotron Ultra with multi-turn continuity.
     Does not display internal reasoning traces (<think> tags).
     """
     system_id = payload.system_id or payload.subject_code or "general"
+    session_id = payload.session_id or str(uuid4())
 
     filters = {"system_id": system_id}
     if payload.resource_type:
@@ -202,6 +227,7 @@ async def chat_stream_with_ai(
             citations.append({"source": file_name, "snippet": text[:120]})
 
     memories = []
+    history = []
     if current_user:
         stmt = (
             select(Memory)
@@ -212,22 +238,59 @@ async def chat_stream_with_ai(
         mem_res = await db.execute(stmt)
         memories = [{"key": m.key, "value": m.value} for m in mem_res.scalars().all()]
 
+        hist_stmt = (
+            select(ChatHistory)
+            .where(ChatHistory.user_id == current_user.id)
+            .where(ChatHistory.session_id == session_id)
+            .order_by(ChatHistory.created_at.asc())
+        )
+        hist_res = await db.execute(hist_stmt)
+        past_msgs = hist_res.scalars().all()
+        max_msgs = getattr(settings, "AI_MAX_RECENT_MESSAGES", 20)
+        recent_past = past_msgs[-max_msgs:] if len(past_msgs) > max_msgs else past_msgs
+        history = [{"role": m.role, "content": m.content} for m in recent_past]
+
     context = {
         "docs": docs,
         "memories": memories,
         "citations": citations,
+        "history": history,
         "system_id": system_id,
     }
 
     llm: BaseLLMProvider = get_llm_provider()
 
     async def event_generator():
-        # First send metadata
-        yield f"data: {json.dumps({'type': 'metadata', 'citations': citations})}\n\n"
+        # First send metadata and session_id
+        yield f"data: {json.dumps({'type': 'metadata', 'session_id': session_id, 'citations': citations})}\n\n"
         accumulated = ""
         async for chunk in llm.stream_response(payload.message, context):
             accumulated += chunk
             yield f"data: {json.dumps({'type': 'token', 'token': chunk})}\n\n"
+
+        # Save to history upon stream completion if user is logged in
+        if current_user and accumulated:
+            try:
+                user_msg = ChatHistory(
+                    user_id=current_user.id,
+                    system_id=system_id,
+                    session_id=session_id,
+                    role="user",
+                    content=payload.message,
+                )
+                ai_msg = ChatHistory(
+                    user_id=current_user.id,
+                    system_id=system_id,
+                    session_id=session_id,
+                    role="assistant",
+                    content=accumulated,
+                    context_source=citations[0]["source"] if citations else None,
+                )
+                db.add_all([user_msg, ai_msg])
+                await db.commit()
+            except Exception as e:
+                print(f"[Chat Stream] Save history warning: {e}")
+
         yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
@@ -251,14 +314,14 @@ async def list_user_conversations(
     result = await db.execute(stmt)
     records = result.scalars().all()
 
-    # Group by session_id
+    # Group by session_id preserving chronological order
     sessions: Dict[str, List[ChatHistory]] = {}
     for r in records:
         sessions.setdefault(r.session_id, []).append(r)
 
     out = []
     for sid, msgs in sessions.items():
-        first_user_msg = next((m.content for m in reversed(msgs) if m.role == "user"), "New Chat")
+        first_user_msg = next((m.content for m in reversed(msgs) if m.role == "user"), "New Conversation")
         out.append(
             ConversationOut(
                 session_id=sid,
@@ -268,3 +331,33 @@ async def list_user_conversations(
             )
         )
     return out
+
+
+@router.get("/conversations/{session_id}", response_model=List[ChatMessageOut])
+async def get_conversation_history(
+    session_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Retrieve full multi-turn chat message history for a specific conversation session.
+    """
+    stmt = (
+        select(ChatHistory)
+        .where(ChatHistory.user_id == current_user.id)
+        .where(ChatHistory.session_id == session_id)
+        .order_by(ChatHistory.created_at.asc())
+    )
+    result = await db.execute(stmt)
+    records = result.scalars().all()
+    return [
+        ChatMessageOut(
+            id=str(r.id),
+            role=r.role,
+            content=r.content,
+            context_source=r.context_source,
+            created_at=r.created_at.isoformat() if hasattr(r.created_at, "isoformat") else str(r.created_at),
+        )
+        for r in records
+    ]
+

@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
 
+import { Loader2 } from "lucide-react";
+
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
@@ -19,6 +21,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setError("");
     setLoading(true);
 
@@ -27,7 +30,7 @@ export default function LoginPage() {
       const res = await fetch(`${apiBase}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
       if (!res.ok) {
@@ -35,30 +38,32 @@ export default function LoginPage() {
           throw new Error("Invalid email or password.");
         }
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || "Login failed");
+        throw new Error(data.detail || "Login failed. Please check your credentials.");
       }
 
       const tokenData = await res.json();
-      
-      // Fetch current user details
-      const userRes = await fetch(`${apiBase}/auth/me`, {
-        headers: { Authorization: `Bearer ${tokenData.access_token}` },
-      });
-      
-      if (!userRes.ok) {
-        throw new Error("Failed to fetch user profile after successful authentication.");
-      }
+      let userData = tokenData.user;
 
-      const userData = await userRes.json();
+      // Fallback only if backend did not bundle user
+      if (!userData) {
+        const userRes = await fetch(`${apiBase}/auth/me`, {
+          headers: { Authorization: `Bearer ${tokenData.access_token}` },
+        });
+        if (userRes.ok) {
+          userData = await userRes.json();
+        } else {
+          userData = { id: "user", email, full_name: "Student", role: "student" };
+        }
+      }
 
       login(tokenData.access_token, tokenData.refresh_token, userData);
       router.push("/dashboard");
     } catch (err: unknown) {
       setError((err as Error).message || "Failed to log in");
-    } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <Card className="border-border/40 shadow-xl backdrop-blur-sm bg-card/95">
@@ -104,9 +109,17 @@ export default function LoginPage() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button variant="gradient" className="w-full" type="submit" disabled={loading}>
-            {loading ? "Signing in..." : "Sign In"}
+          <Button variant="gradient" className="w-full flex items-center justify-center gap-2" type="submit" disabled={loading}>
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Signing in...
+              </>
+            ) : (
+              "Sign In"
+            )}
           </Button>
+
           <p className="text-center text-xs text-muted-foreground">
             Don&apos;t have an account?{" "}
             <Link href="/register" className="font-semibold text-primary hover:underline">

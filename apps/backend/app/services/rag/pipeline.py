@@ -109,3 +109,10 @@ class RAGPipeline:
         )
         reranked_results = self.reranker.rerank(query_text, initial_results, top_k=top_k)
         return reranked_results
+
+    async def delete_resource(self, resource_id: str) -> int:
+        """
+        Remove all vector chunks for a specific resource from the vector store.
+        """
+        return await self.vector_store.delete_by_resource_id(resource_id)
+

@@ -29,9 +29,9 @@ interface NavItem {
 
 const mainNav: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Progress Analytics", href: "/dashboard/progress", icon: LineChart },
   { title: "Faculty Review", href: "/dashboard/review", icon: FolderCheck, role: "faculty" },
 ];
+
 
 const subjectNav: NavItem[] = [
   { title: "Power System", href: "/dashboard/subjects/power-system", icon: Zap },

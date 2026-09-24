@@ -72,7 +72,11 @@ async def login(
     refresh_token = create_refresh_token(str(user.id))
 
     logger.info(f"user_logged_in user_id={str(user.id)} email={user.email}")
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        user=UserResponse.model_validate(user),
+    )
 
 
 # ──────────────────────────────────────────────

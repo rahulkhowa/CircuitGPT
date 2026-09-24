@@ -1,8 +1,12 @@
 import uuid
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from sqlalchemy import String, Text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import BaseModel
+
+if TYPE_CHECKING:
+    from app.models.user import User
+
 
 
 class ChatHistory(BaseModel):

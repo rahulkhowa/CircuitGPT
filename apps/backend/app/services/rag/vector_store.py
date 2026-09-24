@@ -69,3 +69,16 @@ class VectorStoreClient:
         # Sort descending by similarity score
         results.sort(key=lambda x: x["score"], reverse=True)
         return results[:top_k]
+
+    async def delete_by_resource_id(self, resource_id: str) -> int:
+        """
+        Delete all indexed points associated with a resource_id.
+        """
+        keys_to_delete = [
+            pt_id for pt_id, item in self._storage.items()
+            if item.get("payload", {}).get("resource_id") == resource_id
+        ]
+        for k in keys_to_delete:
+            self._storage.pop(k, None)
+        return len(keys_to_delete)
+

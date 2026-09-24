@@ -326,6 +326,12 @@ async def delete_resource(
     # Delete from DB first (inside the managed transaction)
     await repo.delete(upload)
 
+    # Delete indexed vectors from vector store
+    try:
+        await rag_pipeline.delete_resource(str(upload_id))
+    except Exception as exc:
+        print(f"[Uploads] Vector store cleanup error: {exc}")
+
     # Invalidate search cache on resource deletion
     await cache_service.delete_pattern("cache:search:*")
 
@@ -335,4 +341,5 @@ async def delete_resource(
         await storage.delete_file(minio_key)
     except Exception:
         pass  # Object may already be gone; DB is authoritative
+
 

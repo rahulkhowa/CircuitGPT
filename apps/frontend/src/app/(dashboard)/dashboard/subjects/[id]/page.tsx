@@ -148,7 +148,7 @@ function ResourceUploader({
   const [state, setState] = useState<"idle" | "uploading" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost/api/v1";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -236,7 +236,7 @@ function ResourceRow({
   onDeleted: (id: string) => void;
 }) {
   const [deleting, setDeleting] = useState(false);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost/api/v1";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
   const getUrl = async (mode: "view" | "download") => {
     const res = await fetch(`${API_URL}/uploads/${resource.id}/${mode}`, {
@@ -412,7 +412,7 @@ function ResourceTabPanel({
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost/api/v1";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
   const fetchResources = useCallback(async () => {
     setLoading(true);

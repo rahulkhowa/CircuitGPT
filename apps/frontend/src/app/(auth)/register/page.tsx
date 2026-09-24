@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/context/auth-context";
 
+import { Loader2 } from "lucide-react";
+
 export default function RegisterPage() {
   const router = useRouter();
   const { login } = useAuth();
@@ -21,6 +23,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setError("");
 
     // Validate inputs client-side
@@ -48,7 +51,7 @@ export default function RegisterPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           full_name: derivedFullName,
-          email,
+          email: email.trim(),
           password,
           role: "student",
         }),
@@ -59,41 +62,43 @@ export default function RegisterPage() {
           throw new Error("An account with this email already exists.");
         }
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || "Registration failed");
+        throw new Error(data.detail || "Registration failed. Please check your details.");
       }
 
       // Auto-login after registration
       const loginRes = await fetch(`${apiBase}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
       if (!loginRes.ok) {
-        throw new Error("Registration succeeded, but auto-login failed. Please sign in manually.");
+        router.push("/login");
+        return;
       }
 
       const tokenData = await loginRes.json();
-      
-      // Get the profile
-      const userRes = await fetch(`${apiBase}/auth/me`, {
-        headers: { Authorization: `Bearer ${tokenData.access_token}` },
-      });
-      
-      if (!userRes.ok) {
-        throw new Error("Failed to retrieve user profile after auto-login.");
+      let userData = tokenData.user;
+
+      if (!userData) {
+        const userRes = await fetch(`${apiBase}/auth/me`, {
+          headers: { Authorization: `Bearer ${tokenData.access_token}` },
+        });
+        if (userRes.ok) {
+          userData = await userRes.json();
+        } else {
+          userData = { id: "user", email, full_name: derivedFullName, role: "student" };
+        }
       }
-      
-      const userData = await userRes.json();
 
       login(tokenData.access_token, tokenData.refresh_token, userData);
       router.push("/dashboard");
     } catch (err: unknown) {
       setError((err as Error).message || "Failed to register account");
-    } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <Card className="border-border/40 shadow-xl backdrop-blur-sm bg-card/95">
@@ -145,9 +150,17 @@ export default function RegisterPage() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button variant="gradient" className="w-full" type="submit" disabled={loading}>
-            {loading ? "Creating account..." : "Create Account"}
+          <Button variant="gradient" className="w-full flex items-center justify-center gap-2" type="submit" disabled={loading}>
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Creating account...
+              </>
+            ) : (
+              "Create Account"
+            )}
           </Button>
+
           <p className="text-center text-xs text-muted-foreground">
             Already have an account?{" "}
             <Link href="/login" className="font-semibold text-primary hover:underline">

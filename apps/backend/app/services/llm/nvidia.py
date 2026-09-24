@@ -115,14 +115,20 @@ class NvidiaLLMProvider(BaseLLMProvider):
             f"Citations: {citations_text}"
         )
 
+        history = context.get("history", [])
+        messages = [{"role": "system", "content": system_prompt}]
+        for h in history:
+            role = h.get("role")
+            content = h.get("content")
+            if role in ("user", "assistant") and content:
+                messages.append({"role": role, "content": content})
+        messages.append({"role": "user", "content": user_content})
+
         try:
             try:
                 res = self._client.chat.completions.create(
                     model=self.model,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_content},
-                    ],
+                    messages=messages,
                     temperature=self.temperature,
                     top_p=self.top_p,
                     max_tokens=self.max_tokens,
@@ -131,10 +137,7 @@ class NvidiaLLMProvider(BaseLLMProvider):
             except Exception:
                 res = self._client.chat.completions.create(
                     model=self.model,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_content},
-                    ],
+                    messages=messages,
                     temperature=self.temperature,
                     top_p=self.top_p,
                     max_tokens=self.max_tokens,
@@ -176,14 +179,20 @@ class NvidiaLLMProvider(BaseLLMProvider):
             f"Citations: {citations_text}"
         )
 
+        history = context.get("history", [])
+        messages = [{"role": "system", "content": system_prompt}]
+        for h in history:
+            role = h.get("role")
+            content = h.get("content")
+            if role in ("user", "assistant") and content:
+                messages.append({"role": role, "content": content})
+        messages.append({"role": "user", "content": user_content})
+
         try:
             try:
                 stream = await self._async_client.chat.completions.create(
                     model=self.model,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_content},
-                    ],
+                    messages=messages,
                     temperature=self.temperature,
                     top_p=self.top_p,
                     max_tokens=self.max_tokens,
@@ -193,15 +202,13 @@ class NvidiaLLMProvider(BaseLLMProvider):
             except Exception:
                 stream = await self._async_client.chat.completions.create(
                     model=self.model,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_content},
-                    ],
+                    messages=messages,
                     temperature=self.temperature,
                     top_p=self.top_p,
                     max_tokens=self.max_tokens,
                     stream=True,
                 )
+
 
             inside_think_tag = False
             async for chunk in stream:

@@ -1,9 +1,15 @@
 import uuid
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
 from sqlalchemy import String, Boolean, Enum as SAEnum, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import BaseModel
 from app.models.role import UserRole
+
+if TYPE_CHECKING:
+    from app.models.upload import Upload
+    from app.models.chat_history import ChatHistory
+    from app.models.memory import Memory
+
 
 
 class User(BaseModel):
@@ -20,12 +26,7 @@ class User(BaseModel):
     avatar_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     bio: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    # Relationships
-    notes: Mapped[List["Note"]] = relationship(back_populates="author", lazy="selectin")
-    notebooks: Mapped[List["Notebook"]] = relationship(back_populates="owner", lazy="selectin")
-    quiz_attempts: Mapped[List["QuizAttempt"]] = relationship(back_populates="student", lazy="selectin")
-    bookmarks: Mapped[List["Bookmark"]] = relationship(back_populates="user", lazy="selectin")
-    learning_progress: Mapped[List["LearningProgress"]] = relationship(back_populates="user", lazy="selectin")
+    # Active core relationships
     uploads: Mapped[List["Upload"]] = relationship(back_populates="uploaded_by", lazy="selectin")
     chat_histories: Mapped[List["ChatHistory"]] = relationship(back_populates="user", lazy="selectin")
     memories: Mapped[List["Memory"]] = relationship(back_populates="user", lazy="selectin")

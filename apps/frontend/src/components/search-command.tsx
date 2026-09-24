@@ -107,7 +107,8 @@ export function SearchCommand({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost/api/v1";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
+
 
   // Sync scope when currentSubjectId changes
   useEffect(() => {

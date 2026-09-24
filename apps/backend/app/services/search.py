@@ -2,6 +2,7 @@ from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_
 
+from app.core.cache import cache_service
 from app.models.upload import Upload, ResourceType
 from app.schemas.search import (
     SearchQuery,
@@ -21,6 +22,7 @@ SYSTEM_TITLES = {
 class HybridSearchService:
     """
     Hybrid Search service searching real uploaded resources and system documents.
+    Accelerated with Redis caching for instant auto-complete and search recall.
     """
 
     def __init__(self, db: AsyncSession) -> None:
@@ -29,9 +31,15 @@ class HybridSearchService:
     async def search(self, query_params: SearchQuery) -> SearchResponse:
         q = (query_params.query or "").strip().lower()
         category = query_params.category or "all"
-        subject_id = query_params.subject_id
+        subject_id = query_params.subject_id or "all"
+
+        cache_key = f"cache:search:{q}:{category}:{subject_id}:{query_params.limit}:{query_params.offset}"
+        cached = await cache_service.get_json(cache_key)
+        if cached:
+            return SearchResponse.model_validate(cached)
 
         stmt = select(Upload)
+
 
         # Filter by subject if specified
         if subject_id and subject_id != "all":
@@ -76,10 +84,13 @@ class HybridSearchService:
                 )
             )
 
-        return SearchResponse(
+        response = SearchResponse(
             query=query_params.query,
             category=category,
             total_matches=len(items),
             items=items,
         )
+        await cache_service.set_json(cache_key, response.model_dump(mode="json"), expire=120)
+        return response
+
 

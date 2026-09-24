@@ -74,72 +74,49 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Continue Your Learning Section */}
-        <div className="md:col-span-2 space-y-4">
-          <div className="flex items-center justify-between border-b border-border pb-2">
-            <h2 className="text-xl font-bold tracking-tight">Continue your learning</h2>
-            <span className="text-xs text-muted-foreground">{subjects.length} Courses Available</span>
-          </div>
-
-          <div className="space-y-3">
-            {subjects.map((sub) => {
-              const Icon = sub.icon;
-
-              return (
-                <Card key={sub.id} className="border-border hover:border-indigo-500/30 transition-all duration-200 bg-card/40">
-                  <CardHeader className="p-4 flex flex-row items-start justify-between gap-4 space-y-0">
-                    <div className="flex gap-3 items-start">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-foreground text-base leading-none">
-                            {sub.title}
-                          </h3>
-                          <Badge variant="outline" className="font-mono text-[9px] px-1.5 py-0">
-                            {sub.code}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground line-clamp-1">
-                          {sub.description}
-                        </p>
-                        <div className="text-[10px] text-muted-foreground/75 font-mono pt-1">
-                          Progress Tracking: <span className="text-amber-500 font-sans font-medium">Feature coming soon</span>
-                        </div>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm" asChild className="shrink-0 text-xs font-semibold text-primary hover:text-primary/95">
-                      <Link href={`/dashboard/subjects/${sub.id}`}>
-                        Continue <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                      </Link>
-                    </Button>
-                  </CardHeader>
-                </Card>
-              );
-            })}
-          </div>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between border-b border-border pb-2">
+          <h2 className="text-xl font-bold tracking-tight">Active Modules</h2>
+          <span className="text-xs text-muted-foreground">{subjects.length} Subjects Available</span>
         </div>
 
-        {/* Recent Activity Section */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between border-b border-border pb-2">
-            <h2 className="text-xl font-bold tracking-tight">Recent activity</h2>
-          </div>
+        <div className="grid gap-3">
+          {subjects.map((sub) => {
+            const Icon = sub.icon;
 
-          <Card className="border-border bg-card/25 border-dashed">
-            <CardContent className="p-6 text-center space-y-3">
-              <p className="text-sm text-muted-foreground font-normal">
-                Activity logging is currently not connected to the database.
-              </p>
-              <Badge variant="secondary" className="text-[10px] font-medium">
-                Activity Tracking Coming Soon
-              </Badge>
-            </CardContent>
-          </Card>
+            return (
+              <Card key={sub.id} className="border-border hover:border-indigo-500/30 transition-all duration-200 bg-card/40">
+                <CardHeader className="p-4 flex flex-row items-center justify-between gap-4 space-y-0">
+                  <div className="flex gap-3.5 items-center min-w-0">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-foreground text-base leading-none">
+                          {sub.title}
+                        </h3>
+                        <Badge variant="outline" className="font-mono text-[10px] px-1.5 py-0">
+                          {sub.code}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-1">
+                        {sub.description}
+                      </p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm" asChild className="shrink-0 text-xs font-semibold text-primary hover:text-primary/95">
+                    <Link href={`/dashboard/subjects/${sub.id}`}>
+                      Open Workspace <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                </CardHeader>
+              </Card>
+            );
+          })}
         </div>
       </div>
+
     </div>
   );
 }
