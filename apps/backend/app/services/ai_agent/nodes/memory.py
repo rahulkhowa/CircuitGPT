@@ -1,12 +1,13 @@
-from typing import Any, Dict, List
+from typing import Any
+
 from app.services.ai_agent.state import AgentState
 
 
-def memory_node(state: AgentState) -> Dict[str, Any]:
+def memory_node(state: AgentState) -> dict[str, Any]:
     """
     Memory Node: Recalls user learning preferences and prior misconceptions.
     """
-    memory_context: List[Dict[str, Any]] = [
+    memory_context: list[dict[str, Any]] = [
         {
             "type": "mastery",
             "key": "KCL_understanding",

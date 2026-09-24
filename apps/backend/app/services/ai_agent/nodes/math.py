@@ -1,12 +1,13 @@
-from typing import Any, Dict
+from typing import Any
+
 from app.services.ai_agent.state import AgentState
 
 
-def math_node(state: AgentState) -> Dict[str, Any]:
+def math_node(state: AgentState) -> dict[str, Any]:
     """
     Math Node: Executes numerical circuit calculations, matrix inversions, and LaTeX equations.
     """
-    math_results: Dict[str, Any] = {
+    math_results: dict[str, Any] = {
         "v1_volts": 10.0,
         "v2_volts": 4.0,
         "current_i1_amp": 2.0,

@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -10,7 +11,7 @@ class TranscriptionService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    async def transcribe_audio(self, audio_file_url: str) -> Dict[str, Any]:
+    async def transcribe_audio(self, audio_file_url: str) -> dict[str, Any]:
         """
         Transcribe audio file into timestamped segments.
         """

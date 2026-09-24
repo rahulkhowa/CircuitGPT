@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, List, Optional
+from collections.abc import AsyncGenerator
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
@@ -76,7 +76,7 @@ async def get_current_user(
     try:
         user_id = UUID(user_id_str)
     except ValueError:
-        raise credentials_exception
+        raise credentials_exception from None
 
     repo = UserRepository.from_session(db)
     user = await repo.get(user_id)
@@ -98,9 +98,9 @@ async def get_current_active_user(
 
 
 async def get_optional_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     db: AsyncSession = Depends(get_db),
-) -> Optional[User]:
+) -> User | None:
     """
     Optional dependency: returns User if valid Bearer token provided, or None if unauthenticated.
     """
@@ -129,7 +129,7 @@ class RoleChecker:
             ...
     """
 
-    def __init__(self, allowed_roles: List[UserRole]) -> None:
+    def __init__(self, allowed_roles: list[UserRole]) -> None:
         self.allowed_roles = allowed_roles
 
     def __call__(

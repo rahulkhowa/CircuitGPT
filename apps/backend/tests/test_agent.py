@@ -1,5 +1,5 @@
-import pytest
 from app.services.ai_agent.graph import circuit_agent_graph
+
 
 def test_langgraph_agent_structure():
     assert circuit_agent_graph is not None

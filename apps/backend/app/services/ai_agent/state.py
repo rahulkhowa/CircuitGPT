@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, TypedDict
 
 
 class AgentState(TypedDict):
@@ -6,16 +6,16 @@ class AgentState(TypedDict):
     Shared state schema passed between nodes in the CircuitGPT LangGraph workflow.
     Ensures user_id and system_id isolation and context tracking.
     """
-    user_id: Optional[str]
-    system_id: Optional[str]
-    messages: List[Dict[str, str]]
+    user_id: str | None
+    system_id: str | None
+    messages: list[dict[str, str]]
     query: str
-    plan: List[str]
+    plan: list[str]
     current_step: int
-    retrieved_docs: List[Dict[str, Any]]
-    memory_context: List[Dict[str, Any]]
-    web_results: List[Dict[str, Any]]
-    math_results: Dict[str, Any]
-    citations: List[Dict[str, str]]
+    retrieved_docs: list[dict[str, Any]]
+    memory_context: list[dict[str, Any]]
+    web_results: list[dict[str, Any]]
+    math_results: dict[str, Any]
+    citations: list[dict[str, str]]
     final_response: str
     next_node: str

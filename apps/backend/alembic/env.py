@@ -9,11 +9,12 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
+
 from alembic import context
+from app.core.config import settings
 
 # Import all models so Alembic can detect them
 from app.models import Base  # noqa: F401 - registers all models
-from app.core.config import settings
 
 # Alembic Config object (provides access to the .ini file values)
 config = context.config

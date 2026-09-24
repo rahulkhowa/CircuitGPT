@@ -1,12 +1,13 @@
 from fastapi import APIRouter
+
 from app.api.v1.endpoints import (
-    health,
     auth,
-    uploads,
     chat,
-    users,
-    search,
+    health,
     memory,
+    search,
+    uploads,
+    users,
 )
 
 api_router = APIRouter()

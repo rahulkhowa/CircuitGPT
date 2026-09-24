@@ -1,5 +1,7 @@
 import asyncio
-from typing import Any, AsyncGenerator, Dict, List
+from collections.abc import AsyncGenerator
+from typing import Any
+
 from app.services.llm.base import BaseLLMProvider
 
 
@@ -8,7 +10,7 @@ class MockLLMProvider(BaseLLMProvider):
     Deterministic offline fallback provider when no active API key is set.
     """
 
-    def generate_plan(self, query: str) -> List[str]:
+    def generate_plan(self, query: str) -> list[str]:
         return [
             "Analyse the circuit query & identify the relevant EE principles",
             "Recall user memory profile for personalised learning context",
@@ -17,7 +19,7 @@ class MockLLMProvider(BaseLLMProvider):
             "Format citations & synthesise step-by-step response",
         ]
 
-    def generate_response(self, query: str, context: Dict[str, Any]) -> str:
+    def generate_response(self, query: str, context: dict[str, Any]) -> str:
         docs = context.get("docs", [])
         math = context.get("math", {})
         citations = context.get("citations", [])
@@ -35,7 +37,7 @@ class MockLLMProvider(BaseLLMProvider):
             f"> **References**: {refs}"
         )
 
-    async def stream_response(self, query: str, context: Dict[str, Any]) -> AsyncGenerator[str, None]:
+    async def stream_response(self, query: str, context: dict[str, Any]) -> AsyncGenerator[str, None]:
         full_text = self.generate_response(query, context)
         # Yield in small chunks to simulate streaming behavior
         words = full_text.split(" ")

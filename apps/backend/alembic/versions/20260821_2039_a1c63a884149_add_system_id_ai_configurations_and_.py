@@ -5,17 +5,17 @@ Revises: fb64d07d4bb2
 Create Date: 2026-08-21 20:39:04.110094+00:00
 
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = 'a1c63a884149'
-down_revision: Union[str, None] = 'fb64d07d4bb2'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = 'fb64d07d4bb2'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 # Define enum

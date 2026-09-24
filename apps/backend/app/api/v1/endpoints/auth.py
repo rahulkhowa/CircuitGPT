@@ -3,7 +3,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
 from app.core.logging import get_logger
-from app.core.security import create_access_token, create_refresh_token, decode_access_token
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    decode_access_token,
+)
 from app.models.user import User
 from app.schemas.user import (
     LoginRequest,
@@ -110,7 +114,7 @@ async def refresh_token(
     try:
         user_id = UUID(token_data["sub"])
     except (KeyError, ValueError):
-        raise credentials_exception
+        raise credentials_exception from None
 
     from app.repositories.user import UserRepository
     repo = UserRepository.from_session(db)

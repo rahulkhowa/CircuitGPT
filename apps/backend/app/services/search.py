@@ -1,9 +1,8 @@
-from typing import List, Optional
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_
 
 from app.core.cache import cache_service
-from app.models.upload import Upload, ResourceType
+from app.models.upload import ResourceType, Upload
 from app.schemas.search import (
     SearchQuery,
     SearchResponse,
@@ -62,7 +61,7 @@ class HybridSearchService:
         result = await self.db.execute(stmt)
         uploads = result.scalars().all()
 
-        items: List[SearchResultItem] = []
+        items: list[SearchResultItem] = []
         for u in uploads:
             sub_name = SYSTEM_TITLES.get(u.subject_id, u.subject_id)
             items.append(

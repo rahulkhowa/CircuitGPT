@@ -1,9 +1,9 @@
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from app.models.role import UserRole
 
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+from app.models.role import UserRole
 
 # ──────────────────────────────────────────────
 # Request schemas
@@ -19,9 +19,9 @@ class UserCreate(BaseModel):
 
 class UserUpdate(BaseModel):
     """Payload for PATCH /users/me"""
-    full_name: Optional[str] = Field(None, min_length=2, max_length=255)
-    bio: Optional[str] = Field(None, max_length=1000)
-    avatar_url: Optional[str] = Field(None, max_length=512)
+    full_name: str | None = Field(None, min_length=2, max_length=255)
+    bio: str | None = Field(None, max_length=1000)
+    avatar_url: str | None = Field(None, max_length=512)
 
 
 class PasswordChange(BaseModel):
@@ -44,8 +44,8 @@ class UserResponse(BaseModel):
     role: UserRole
     is_active: bool
     is_verified: bool
-    avatar_url: Optional[str] = None
-    bio: Optional[str] = None
+    avatar_url: str | None = None
+    bio: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -59,7 +59,7 @@ class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
-    user: Optional[UserResponse] = None
+    user: UserResponse | None = None
 
 
 

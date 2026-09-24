@@ -1,11 +1,12 @@
-import pytest
+from collections.abc import AsyncGenerator
+
 import pytest_asyncio
-from typing import AsyncGenerator
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+from app.api.deps import get_db, get_redis
 from app.main import app
 from app.models import Base
-from app.api.deps import get_db, get_redis
 
 # Async SQLite engine for testing
 TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
@@ -25,6 +26,7 @@ TestingSessionLocal = async_sessionmaker(
 )
 
 import fnmatch
+
 
 class MockRedis:
     """Mock Redis client for test suite execution supporting Lua script eval, scans, and TTLs."""
@@ -131,9 +133,9 @@ async def setup_test_db():
 async def async_client() -> AsyncGenerator[AsyncClient, None]:
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_redis] = override_get_redis
-    
+
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         yield client
-    
+
     app.dependency_overrides.clear()

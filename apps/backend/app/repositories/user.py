@@ -1,5 +1,3 @@
-from typing import Optional
-from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +17,7 @@ class UserRepository(BaseRepository[User]):
     # Lookup helpers
     # ──────────────────────────────────────────────
 
-    async def get_by_email(self, email: str) -> Optional[User]:
+    async def get_by_email(self, email: str) -> User | None:
         """Fetch a user by e-mail address (case-insensitive)."""
         result = await self.db.execute(
             select(User).where(User.email == email.lower().strip())

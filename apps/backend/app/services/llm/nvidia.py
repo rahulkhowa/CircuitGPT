@@ -1,6 +1,7 @@
 import re
-import asyncio
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from collections.abc import AsyncGenerator
+from typing import Any
+
 from openai import AsyncOpenAI, OpenAI
 
 from app.core.config import settings
@@ -37,14 +38,14 @@ class NvidiaLLMProvider(BaseLLMProvider):
         self._client = OpenAI(base_url=self.base_url, api_key=self.api_key or "invalid")
         self._async_client = AsyncOpenAI(base_url=self.base_url, api_key=self.api_key or "invalid")
 
-    def _build_extra_body(self) -> Dict[str, Any]:
+    def _build_extra_body(self) -> dict[str, Any]:
         """Construct extra_body for official Nemotron reasoning parameters."""
         extra = {}
         enable_thinking = self.reasoning_effort != "none"
         extra["chat_template_kwargs"] = {"enable_thinking": enable_thinking}
         return extra
 
-    def generate_plan(self, query: str) -> List[str]:
+    def generate_plan(self, query: str) -> list[str]:
         if not self.api_key:
             from app.services.llm.mock import MockLLMProvider
             return MockLLMProvider().generate_plan(query)
@@ -86,7 +87,7 @@ class NvidiaLLMProvider(BaseLLMProvider):
             from app.services.llm.mock import MockLLMProvider
             return MockLLMProvider().generate_plan(query)
 
-    def generate_response(self, query: str, context: Dict[str, Any]) -> str:
+    def generate_response(self, query: str, context: dict[str, Any]) -> str:
         if not self.api_key:
             from app.services.llm.mock import MockLLMProvider
             return MockLLMProvider().generate_response(query, context)
@@ -149,7 +150,7 @@ class NvidiaLLMProvider(BaseLLMProvider):
             from app.services.llm.mock import MockLLMProvider
             return MockLLMProvider().generate_response(query, context)
 
-    async def stream_response(self, query: str, context: Dict[str, Any]) -> AsyncGenerator[str, None]:
+    async def stream_response(self, query: str, context: dict[str, Any]) -> AsyncGenerator[str, None]:
         if not self.api_key:
             from app.services.llm.mock import MockLLMProvider
             async for chunk in MockLLMProvider().stream_response(query, context):

@@ -1,10 +1,9 @@
-from typing import Any, Dict, List, Optional
-from uuid import uuid4
+from typing import Any
 
 from app.services.rag.doc_processor import DocumentProcessor
 from app.services.rag.embeddings import EmbeddingService
-from app.services.rag.vector_store import VectorStoreClient
 from app.services.rag.reranker import RerankerService
+from app.services.rag.vector_store import VectorStoreClient
 from app.services.rag.video_processor import VideoProcessor
 
 
@@ -29,8 +28,8 @@ class RAGPipeline:
         system_id: str,
         resource_type: str,
         resource_id: str,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Process text content into chunks, compute embeddings, and index into Qdrant vector store
         scoped by system_id.
@@ -78,8 +77,8 @@ class RAGPipeline:
         video_filename: str,
         system_id: str,
         resource_id: str,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Extract audio, transcribe video with timestamps, and index into vector store.
         """
@@ -98,8 +97,8 @@ class RAGPipeline:
         )
 
     async def query(
-        self, query_text: str, top_k: int = 5, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Dict[str, Any]]:
+        self, query_text: str, top_k: int = 5, filters: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """
         Vector search + Reranking retrieval pipeline filtered by system_id.
         """

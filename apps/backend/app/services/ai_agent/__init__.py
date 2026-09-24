@@ -1,5 +1,5 @@
+from app.services.ai_agent.graph import circuit_agent_graph, create_agent_graph
 from app.services.ai_agent.state import AgentState
-from app.services.ai_agent.graph import create_agent_graph, circuit_agent_graph
 
 __all__ = [
     "AgentState",

@@ -1,10 +1,12 @@
-import pytest
-import asyncio
 from uuid import uuid4
+
+import pytest
+
+from app.repositories.memory import MemoryRepository
 from app.services.llm.factory import get_llm_provider
 from app.services.llm.nvidia import clean_reasoning_traces
 from app.services.rag.pipeline import RAGPipeline
-from app.repositories.memory import MemoryRepository
+
 
 @pytest.mark.asyncio
 async def test_reasoning_content_filtering():
@@ -76,8 +78,8 @@ async def test_user_memory_isolation():
     # Verify repository query filtering
     from unittest.mock import AsyncMock, MagicMock
 
-    user_a_id = uuid4()
     user_b_id = uuid4()
+    _user_a_id = uuid4()  # noqa: F841 — kept for test readability
     sys_id = "power-system"
 
     db_mock = AsyncMock()

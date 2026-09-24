@@ -1,9 +1,10 @@
-from typing import Any, Dict
+from typing import Any
+
 from app.services.ai_agent.state import AgentState
 from app.services.llm.factory import get_llm_provider
 
 
-def generator_node(state: AgentState) -> Dict[str, Any]:
+def generator_node(state: AgentState) -> dict[str, Any]:
     """
     Generator Node: Synthesizes final response using the active LLM provider.
     """

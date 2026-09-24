@@ -1,10 +1,9 @@
-from typing import List, Optional
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.upload import Upload, ResourceType
+from app.models.upload import ResourceType, Upload
 from app.repositories.base import BaseRepository
 
 
@@ -20,11 +19,11 @@ class UploadRepository(BaseRepository[Upload]):
 
     async def list_for_system(
         self,
-        subject_id: Optional[str] = None,
-        resource_type: Optional[ResourceType] = None,
+        subject_id: str | None = None,
+        resource_type: ResourceType | None = None,
         skip: int = 0,
         limit: int = 200,
-    ) -> List[Upload]:
+    ) -> list[Upload]:
         """Return all shared uploads, optionally filtered by subject and/or resource type."""
         stmt = select(Upload)
         if subject_id and subject_id != "all":
@@ -42,7 +41,7 @@ class UploadRepository(BaseRepository[Upload]):
         resource_type: ResourceType,
         skip: int = 0,
         limit: int = 200,
-    ) -> List[Upload]:
+    ) -> list[Upload]:
         """Return all uploads belonging to `user_id` for a specific subject + resource type."""
         stmt = (
             select(Upload)
@@ -56,13 +55,13 @@ class UploadRepository(BaseRepository[Upload]):
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_by_id(self, upload_id: UUID) -> Optional[Upload]:
+    async def get_by_id(self, upload_id: UUID) -> Upload | None:
         """Fetch a single upload by its ID, regardless of who owns it."""
         stmt = select(Upload).where(Upload.id == upload_id)
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def get_owned_by_user(self, upload_id: UUID, user_id: UUID) -> Optional[Upload]:
+    async def get_owned_by_user(self, upload_id: UUID, user_id: UUID) -> Upload | None:
         """Fetch a single upload only if it belongs to the given user (ownership check)."""
         stmt = (
             select(Upload)

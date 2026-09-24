@@ -1,8 +1,6 @@
-from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import select, or_
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import or_, select
 
 from app.models.memory import Memory
 from app.repositories.base import BaseRepository
@@ -16,8 +14,8 @@ class MemoryRepository(BaseRepository[Memory]):
     model = Memory
 
     async def get_by_user_and_system(
-        self, user_id: UUID, system_id: Optional[str] = None, memory_type: Optional[str] = None, limit: int = 50
-    ) -> List[Memory]:
+        self, user_id: UUID, system_id: str | None = None, memory_type: str | None = None, limit: int = 50
+    ) -> list[Memory]:
         """Fetch memories strictly for a user within a specific system scope."""
         stmt = select(Memory).where(Memory.user_id == user_id)
         if system_id:
@@ -28,7 +26,7 @@ class MemoryRepository(BaseRepository[Memory]):
         return list(result.scalars().all())
 
     async def get_by_user(
-        self, user_id: UUID, memory_type: Optional[str] = None, limit: int = 50
-    ) -> List[Memory]:
+        self, user_id: UUID, memory_type: str | None = None, limit: int = 50
+    ) -> list[Memory]:
         """Fetch memories for a user."""
         return await self.get_by_user_and_system(user_id=user_id, memory_type=memory_type, limit=limit)

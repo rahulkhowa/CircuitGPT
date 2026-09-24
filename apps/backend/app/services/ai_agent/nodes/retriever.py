@@ -1,13 +1,14 @@
 import asyncio
-from typing import Any, Dict, List
+from typing import Any
+
+from app.core.config import settings
 from app.services.ai_agent.state import AgentState
 from app.services.rag.pipeline import RAGPipeline
-from app.core.config import settings
 
 rag_pipeline = RAGPipeline()
 
 
-def retriever_node(state: AgentState) -> Dict[str, Any]:
+def retriever_node(state: AgentState) -> dict[str, Any]:
     """
     Retriever Node: Fetches vector embeddings from Qdrant vector store scoped by system_id.
     """

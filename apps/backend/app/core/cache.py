@@ -1,6 +1,7 @@
 import json
 import logging
-from typing import Any, Optional
+from typing import Any
+
 from app.core.database import redis_client
 
 logger = logging.getLogger(__name__)
@@ -15,7 +16,7 @@ class CacheService:
     def __init__(self, client=None) -> None:
         self._client = client or redis_client
 
-    async def get(self, key: str) -> Optional[str]:
+    async def get(self, key: str) -> str | None:
         """Retrieve raw string value by key."""
         try:
             return await self._client.get(key)
@@ -23,7 +24,7 @@ class CacheService:
             logger.warning(f"[CacheService] get error for key '{key}': {exc}")
             return None
 
-    async def set(self, key: str, value: str, expire: Optional[int] = None) -> bool:
+    async def set(self, key: str, value: str, expire: int | None = None) -> bool:
         """Store string value with optional TTL in seconds."""
         try:
             if expire:
@@ -35,7 +36,7 @@ class CacheService:
             logger.warning(f"[CacheService] set error for key '{key}': {exc}")
             return False
 
-    async def get_json(self, key: str) -> Optional[Any]:
+    async def get_json(self, key: str) -> Any | None:
         """Retrieve and deserialize JSON object by key."""
         raw = await self.get(key)
         if raw is None:
@@ -46,7 +47,7 @@ class CacheService:
             logger.warning(f"[CacheService] JSON decode error for key '{key}': {exc}")
             return None
 
-    async def set_json(self, key: str, value: Any, expire: Optional[int] = 300) -> bool:
+    async def set_json(self, key: str, value: Any, expire: int | None = 300) -> bool:
         """Serialize and store JSON object with default 5-minute TTL."""
         try:
             serialized = json.dumps(value)

@@ -1,7 +1,7 @@
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
+from typing import Any, Generic, TypeVar
 from uuid import UUID
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.base import BaseModel
@@ -19,7 +19,7 @@ class BaseRepository(Generic[ModelType]):
             model = User
     """
 
-    model: Type[ModelType]
+    model: type[ModelType]
 
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
@@ -28,7 +28,7 @@ class BaseRepository(Generic[ModelType]):
     # Read
     # ──────────────────────────────────────────────
 
-    async def get(self, id: UUID) -> Optional[ModelType]:
+    async def get(self, id: UUID) -> ModelType | None:
         """Fetch a single record by primary key."""
         result = await self.db.execute(select(self.model).where(self.model.id == id))
         return result.scalar_one_or_none()
@@ -38,8 +38,8 @@ class BaseRepository(Generic[ModelType]):
         *,
         skip: int = 0,
         limit: int = 100,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[ModelType]:
+        filters: dict[str, Any] | None = None,
+    ) -> list[ModelType]:
         """Fetch a paginated list, optionally filtered by exact-match column values."""
         stmt = select(self.model)
         if filters:
@@ -49,7 +49,7 @@ class BaseRepository(Generic[ModelType]):
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 
-    async def count(self, filters: Optional[Dict[str, Any]] = None) -> int:
+    async def count(self, filters: dict[str, Any] | None = None) -> int:
         """Return row count, optionally filtered."""
         stmt = select(func.count()).select_from(self.model)
         if filters:
@@ -62,7 +62,7 @@ class BaseRepository(Generic[ModelType]):
     # Write
     # ──────────────────────────────────────────────
 
-    async def create(self, obj_in: Dict[str, Any]) -> ModelType:
+    async def create(self, obj_in: dict[str, Any]) -> ModelType:
         """Insert a new record and return the persisted instance."""
         db_obj = self.model(**obj_in)
         self.db.add(db_obj)
@@ -73,7 +73,7 @@ class BaseRepository(Generic[ModelType]):
     async def update(
         self,
         db_obj: ModelType,
-        obj_in: Union[Dict[str, Any], Any],
+        obj_in: dict[str, Any] | Any,
     ) -> ModelType:
         """Apply a partial update dict (or Pydantic model) to an existing record."""
         if not isinstance(obj_in, dict):

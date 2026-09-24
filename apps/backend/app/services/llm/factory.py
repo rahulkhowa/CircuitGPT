@@ -1,7 +1,7 @@
 from app.core.config import settings
 from app.services.llm.base import BaseLLMProvider
-from app.services.llm.nvidia import NvidiaLLMProvider
 from app.services.llm.mock import MockLLMProvider
+from app.services.llm.nvidia import NvidiaLLMProvider
 
 
 def get_llm_provider() -> BaseLLMProvider:
@@ -17,6 +17,6 @@ def get_llm_provider() -> BaseLLMProvider:
         else:
             print("[CircuitGPT] LLM_PROVIDER is nvidia but NVIDIA_API_KEY is not set. Using MockLLMProvider fallback.")
             return MockLLMProvider()
-    
+
     # Add future providers here (e.g., groq, openai, anthropic)
     return MockLLMProvider()

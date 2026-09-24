@@ -1,9 +1,9 @@
-from typing import List, Optional
-from uuid import UUID, uuid4
+from uuid import UUID
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.memory import MemoryRepository
-from app.schemas.memory import MemoryCreate, MemoryResponse, MemoryRecallQuery
+from app.schemas.memory import MemoryCreate, MemoryRecallQuery, MemoryResponse
 
 
 class MemoryService:
@@ -28,6 +28,6 @@ class MemoryService:
         )
         return MemoryResponse.model_validate(memory_obj)
 
-    async def recall_memories(self, user_id: UUID, query: MemoryRecallQuery) -> List[MemoryResponse]:
+    async def recall_memories(self, user_id: UUID, query: MemoryRecallQuery) -> list[MemoryResponse]:
         memories = await self.repo.get_by_user(user_id=user_id, limit=query.top_k)
         return [MemoryResponse.model_validate(m) for m in memories]

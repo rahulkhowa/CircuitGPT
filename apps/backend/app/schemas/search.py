@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -14,8 +15,8 @@ class SearchCategoryFilter(str):
 
 class SearchQuery(BaseModel):
     query: str = Field(..., json_schema_extra={"example": "KCL Kirchhoff Current Law"})
-    category: Optional[str] = Field(default="all", json_schema_extra={"example": "all"})
-    subject_id: Optional[str] = Field(None, json_schema_extra={"example": "ee101"})
+    category: str | None = Field(default="all", json_schema_extra={"example": "all"})
+    subject_id: str | None = Field(None, json_schema_extra={"example": "ee101"})
     limit: int = Field(default=20, ge=1, le=100)
     offset: int = Field(default=0, ge=0)
 
@@ -29,12 +30,12 @@ class SearchResultItem(BaseModel):
     snippet: str
     score: float
     link: str
-    tags: List[str] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    tags: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class SearchResponse(BaseModel):
     query: str
     category: str
     total_matches: int
-    items: List[SearchResultItem]
+    items: list[SearchResultItem]

@@ -368,7 +368,7 @@ export function AiChatInterface({
                     className="text-xs justify-start h-auto py-2.5 px-3 text-left font-normal border shadow-2xs"
                     onClick={() => handleSend(prompt)}
                   >
-                    "{prompt}"
+                    &quot;{prompt}&quot;
                   </Button>
                 ))}
               </div>

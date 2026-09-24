@@ -7,9 +7,8 @@ so it integrates cleanly with FastAPI's async request handlers.
 
 import asyncio
 import io
-from functools import partial
-from typing import Optional
 from datetime import timedelta
+from functools import partial
 
 from minio import Minio
 from minio.error import S3Error
@@ -31,8 +30,8 @@ def _build_client(endpoint: str) -> Minio:
 
 
 # Shared client instances
-_minio_client: Optional[Minio] = None
-_minio_public_client: Optional[Minio] = None
+_minio_client: Minio | None = None
+_minio_public_client: Minio | None = None
 
 
 def get_minio_client() -> Minio:
@@ -86,7 +85,7 @@ class StorageService:
         except S3Error:
             pass  # Object may already be gone
 
-    def _get_sync(self, key: str) -> Optional[bytes]:
+    def _get_sync(self, key: str) -> bytes | None:
         try:
             self._ensure_bucket()
             response = self._client.get_object(self.bucket_name, key)
@@ -120,7 +119,7 @@ class StorageService:
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, partial(self._upload_sync, key, data, content_type))
 
-    async def get_file(self, key: str) -> Optional[bytes]:
+    async def get_file(self, key: str) -> bytes | None:
         """Download binary data from MinIO for the given object key."""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, partial(self._get_sync, key))
@@ -135,7 +134,7 @@ class StorageService:
         key: str,
         expires_seconds: int = 3600,
         inline: bool = False,
-        response_content_type: Optional[str] = None,
+        response_content_type: str | None = None,
     ) -> str:
         """
         Return a temporary presigned GET URL for the given object key.

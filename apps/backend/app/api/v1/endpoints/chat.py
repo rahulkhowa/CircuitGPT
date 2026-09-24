@@ -1,26 +1,26 @@
-import json
-import asyncio
-import os
 import io
-import pypdf
-from typing import Any, Dict, List, Optional
+import json
+import os
+from typing import Any
 from uuid import uuid4
-from fastapi import APIRouter, Depends, HTTPException, status
+
+import pypdf
+from fastapi import APIRouter, Depends, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db, get_optional_current_user
 from app.core.config import settings
-from app.models.user import User
 from app.models.chat_history import ChatHistory
 from app.models.memory import Memory
 from app.models.upload import Upload
-from app.services.storage import StorageService
-from app.services.rag.pipeline import RAGPipeline
-from app.services.llm.factory import get_llm_provider
+from app.models.user import User
 from app.services.llm.base import BaseLLMProvider
+from app.services.llm.factory import get_llm_provider
+from app.services.rag.pipeline import RAGPipeline
+from app.services.storage import StorageService
 
 router = APIRouter()
 rag_pipeline = RAGPipeline()
@@ -28,16 +28,16 @@ rag_pipeline = RAGPipeline()
 
 class ChatRequest(BaseModel):
     message: str
-    subject_code: Optional[str] = "EE101"
-    system_id: Optional[str] = "power-system"
-    session_id: Optional[str] = None
-    resource_type: Optional[str] = None
+    subject_code: str | None = "EE101"
+    system_id: str | None = "power-system"
+    session_id: str | None = None
+    resource_type: str | None = None
 
 
 class ChatResponse(BaseModel):
     session_id: str
     response: str
-    citations: List[Dict[str, Any]]
+    citations: list[dict[str, Any]]
     llm_provider: str
 
 
@@ -52,7 +52,7 @@ class ChatMessageOut(BaseModel):
     id: str
     role: str
     content: str
-    context_source: Optional[str] = None
+    context_source: str | None = None
     created_at: str
 
 
@@ -60,13 +60,13 @@ class ChatMessageOut(BaseModel):
 async def chat_with_ai(
     payload: ChatRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Optional[User] = Depends(get_optional_current_user),
+    current_user: User | None = Depends(get_optional_current_user),
 ):
     """
     Agentic System-Scoped AI Chat endpoint using NVIDIA Nemotron Ultra + RAG + Multi-Turn Memory.
     Manages context window to prevent token overflow while preserving continuous dialogue.
     """
-    user_id = str(current_user.id) if current_user else "anonymous"
+    _user_id = str(current_user.id) if current_user else "anonymous"  # noqa: F841
     system_id = payload.system_id or payload.subject_code or "general"
     session_id = payload.session_id or str(uuid4())
 
@@ -137,7 +137,7 @@ async def chat_with_ai(
         stmt = (
             select(Memory)
             .where(Memory.user_id == current_user.id)
-            .where((Memory.system_id == system_id) | (Memory.system_id == None))
+            .where((Memory.system_id == system_id) | (Memory.system_id is None))
             .limit(settings.AI_MEMORY_TOP_K)
         )
         mem_res = await db.execute(stmt)
@@ -201,7 +201,7 @@ async def chat_with_ai(
 async def chat_stream_with_ai(
     payload: ChatRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Optional[User] = Depends(get_optional_current_user),
+    current_user: User | None = Depends(get_optional_current_user),
 ):
     """
     Server-Sent Events (SSE) real-time streaming endpoint for Nemotron Ultra with multi-turn continuity.
@@ -232,7 +232,7 @@ async def chat_stream_with_ai(
         stmt = (
             select(Memory)
             .where(Memory.user_id == current_user.id)
-            .where((Memory.system_id == system_id) | (Memory.system_id == None))
+            .where((Memory.system_id == system_id) | (Memory.system_id is None))
             .limit(settings.AI_MEMORY_TOP_K)
         )
         mem_res = await db.execute(stmt)
@@ -296,7 +296,7 @@ async def chat_stream_with_ai(
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
-@router.get("/conversations", response_model=List[ConversationOut])
+@router.get("/conversations", response_model=list[ConversationOut])
 async def list_user_conversations(
     system_id: str,
     db: AsyncSession = Depends(get_db),
@@ -315,7 +315,7 @@ async def list_user_conversations(
     records = result.scalars().all()
 
     # Group by session_id preserving chronological order
-    sessions: Dict[str, List[ChatHistory]] = {}
+    sessions: dict[str, list[ChatHistory]] = {}
     for r in records:
         sessions.setdefault(r.session_id, []).append(r)
 
@@ -333,7 +333,7 @@ async def list_user_conversations(
     return out
 
 
-@router.get("/conversations/{session_id}", response_model=List[ChatMessageOut])
+@router.get("/conversations/{session_id}", response_model=list[ChatMessageOut])
 async def get_conversation_history(
     session_id: str,
     db: AsyncSession = Depends(get_db),

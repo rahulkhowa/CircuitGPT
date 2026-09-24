@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 from uuid import uuid4
 
 
@@ -8,9 +8,9 @@ class VideoProcessor:
     """
 
     def process_transcript(
-        self, transcript_segments: List[Dict[str, Any]], video_title: str
-    ) -> List[Dict[str, Any]]:
-        chunks: List[Dict[str, Any]] = []
+        self, transcript_segments: list[dict[str, Any]], video_title: str
+    ) -> list[dict[str, Any]]:
+        chunks: list[dict[str, Any]] = []
         for idx, seg in enumerate(transcript_segments):
             chunk_id = str(uuid4())
             chunks.append({

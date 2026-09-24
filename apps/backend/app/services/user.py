@@ -1,4 +1,3 @@
-from typing import Optional
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -84,7 +83,7 @@ class UserService:
             )
         return user
 
-    async def get_by_email(self, email: str) -> Optional[User]:
+    async def get_by_email(self, email: str) -> User | None:
         return await self.repo.get_by_email(email)
 
     # ──────────────────────────────────────────────

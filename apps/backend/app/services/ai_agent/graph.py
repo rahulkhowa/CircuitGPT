@@ -1,14 +1,15 @@
-from langgraph.graph import StateGraph, END
-from app.services.ai_agent.state import AgentState
+from langgraph.graph import END, StateGraph
+
 from app.services.ai_agent.nodes import (
-    planner_node,
-    memory_node,
-    retriever_node,
-    search_node,
-    math_node,
     citation_node,
     generator_node,
+    math_node,
+    memory_node,
+    planner_node,
+    retriever_node,
+    search_node,
 )
+from app.services.ai_agent.state import AgentState
 
 
 def create_agent_graph():

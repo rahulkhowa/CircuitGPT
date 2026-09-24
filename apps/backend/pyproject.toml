@@ -32,7 +32,13 @@ select = [
     "UP",   # pyupgrade (modern Python syntax)
 ]
 ignore = [
-    "E501", # line too long (handled by Black)
+    "E501",  # line too long (handled by Black)
+    "B008",  # FastAPI Depends() in function defaults is the standard pattern
+    "UP042", # StrEnum requires Python 3.11+; keep str+Enum for compatibility
+    "E741",  # Ambiguous variable names (l, O, I) — legacy code, low risk
+    "B905",  # zip() without strict= — not critical for internal usage
+    "C408",  # dict() literal rewrite — cosmetic only
+    "E402",  # Module level import not at top — conftest setup ordering
 ]
 exclude = [
     "alembic",

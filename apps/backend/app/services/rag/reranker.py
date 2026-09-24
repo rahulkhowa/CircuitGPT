@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 
 
 class RerankerService:
@@ -6,7 +6,7 @@ class RerankerService:
     Cross-encoder reranker for re-ordering retrieved RAG document chunks based on semantic relevance.
     """
 
-    def rerank(self, query: str, documents: List[Dict[str, Any]], top_k: int = 5) -> List[Dict[str, Any]]:
+    def rerank(self, query: str, documents: list[dict[str, Any]], top_k: int = 5) -> list[dict[str, Any]]:
         """
         Rerank document points by combining vector score with query token overlap.
         """

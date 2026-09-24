@@ -6,13 +6,13 @@ Priority order:
   2. Otherwise → fall back to MockLLM (deterministic, zero-dependency).
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 
 class MockLLM:
     """Deterministic offline fallback — no API key required."""
 
-    def generate_plan(self, query: str) -> List[str]:
+    def generate_plan(self, query: str) -> list[str]:
         return [
             "Analyse the circuit query & identify the relevant EE principles",
             "Recall user memory profile for personalised learning context",
@@ -21,7 +21,7 @@ class MockLLM:
             "Format citations & synthesise step-by-step response",
         ]
 
-    def generate_response(self, query: str, context: Dict[str, Any]) -> str:
+    def generate_response(self, query: str, context: dict[str, Any]) -> str:
         docs = context.get("docs", [])
         math = context.get("math", {})
         citations = context.get("citations", [])
@@ -46,8 +46,9 @@ def _build_groq_llm():
     Returns (groq_llm, True) on success, or (None, False) when the key is absent.
     """
     try:
-        from app.core.config import settings
         from langchain_groq import ChatGroq
+
+        from app.core.config import settings
 
         if not settings.GROQ_API_KEY:
             return None, False
@@ -82,7 +83,7 @@ class GroqLLM:
         if not self._live:
             return self._mock.generate_plan(query)
         try:
-            from langchain_core.messages import SystemMessage, HumanMessage
+            from langchain_core.messages import HumanMessage, SystemMessage
             messages = [
                 SystemMessage(content=(
                     "You are CircuitGPT, an expert Electrical Engineering tutor. "
@@ -100,11 +101,11 @@ class GroqLLM:
 
     # ── Response generation ──────────────────────────────────────────
 
-    def generate_response(self, query: str, context: Dict[str, Any]) -> str:
+    def generate_response(self, query: str, context: dict[str, Any]) -> str:
         if not self._live:
             return self._mock.generate_response(query, context)
         try:
-            from langchain_core.messages import SystemMessage, HumanMessage
+            from langchain_core.messages import HumanMessage, SystemMessage
 
             docs_text = "\n".join(
                 f"- [{d.get('doc_id','')}] {d.get('title','')}: {d.get('content','')}"

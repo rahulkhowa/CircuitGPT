@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 
@@ -8,7 +8,7 @@ class VectorStoreClient:
     Maintains collections and vector similarity search points.
     """
     # Shared in-memory point storage for fast local testing and cross-module availability
-    _shared_storage: Dict[str, Dict[str, Any]] = {}
+    _shared_storage: dict[str, dict[str, Any]] = {}
 
     def __init__(self, collection_name: str = "circuitgpt_knowledge") -> None:
         self.collection_name = collection_name
@@ -16,7 +16,7 @@ class VectorStoreClient:
 
     async def upsert_points(
         self,
-        points: List[Dict[str, Any]],
+        points: list[dict[str, Any]],
     ) -> bool:
         """
         Upsert vector points containing 'id', 'vector', and 'payload'.
@@ -32,10 +32,10 @@ class VectorStoreClient:
 
     async def search(
         self,
-        query_vector: List[float],
+        query_vector: list[float],
         top_k: int = 5,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[Dict[str, Any]]:
+        filters: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Cosine similarity search over stored points.
         """

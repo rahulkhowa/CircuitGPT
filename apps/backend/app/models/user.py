@@ -1,14 +1,16 @@
-import uuid
-from typing import Optional, List, TYPE_CHECKING
-from sqlalchemy import String, Boolean, Enum as SAEnum, Text
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, String, Text
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.models.base import BaseModel
 from app.models.role import UserRole
 
 if TYPE_CHECKING:
-    from app.models.upload import Upload
     from app.models.chat_history import ChatHistory
     from app.models.memory import Memory
+    from app.models.upload import Upload
 
 
 
@@ -23,13 +25,13 @@ class User(BaseModel):
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    avatar_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
-    bio: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    avatar_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    bio: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Active core relationships
-    uploads: Mapped[List["Upload"]] = relationship(back_populates="uploaded_by", lazy="selectin")
-    chat_histories: Mapped[List["ChatHistory"]] = relationship(back_populates="user", lazy="selectin")
-    memories: Mapped[List["Memory"]] = relationship(back_populates="user", lazy="selectin")
+    uploads: Mapped[list["Upload"]] = relationship(back_populates="uploaded_by", lazy="selectin")
+    chat_histories: Mapped[list["ChatHistory"]] = relationship(back_populates="user", lazy="selectin")
+    memories: Mapped[list["Memory"]] = relationship(back_populates="user", lazy="selectin")
 
     def __repr__(self) -> str:
         return f"<User id={self.id} email={self.email} role={self.role}>"

@@ -1,6 +1,5 @@
-import math
 import hashlib
-from typing import List
+import math
 
 
 class EmbeddingService:
@@ -12,7 +11,7 @@ class EmbeddingService:
     def __init__(self, dimension: int = 384) -> None:
         self.dimension = dimension
 
-    def get_embedding(self, text: str) -> List[float]:
+    def get_embedding(self, text: str) -> list[float]:
         """
         Generate a 384-dim unit-normalized float vector representation.
         """
@@ -35,5 +34,5 @@ class EmbeddingService:
 
         return vector
 
-    def get_embeddings_batch(self, texts: List[str]) -> List[List[float]]:
+    def get_embeddings_batch(self, texts: list[str]) -> list[list[float]]:
         return [self.get_embedding(t) for t in texts]

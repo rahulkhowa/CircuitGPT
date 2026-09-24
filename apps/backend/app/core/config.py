@@ -1,7 +1,9 @@
 import os
-from typing import Any, Dict, Optional
-from pydantic import PostgresDsn, field_validator
+from typing import Any
+
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
 
 class Settings(BaseSettings):
     # App Settings
@@ -23,21 +25,21 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = "circuitgpt"
     POSTGRES_PASSWORD: str = "circuitsecurepass"
     POSTGRES_DB: str = "circuitgpt_db"
-    SQLALCHEMY_DATABASE_URI: Optional[str] = None
+    SQLALCHEMY_DATABASE_URI: str | None = None
 
     @field_validator("SQLALCHEMY_DATABASE_URI", mode="before")
     @classmethod
-    def assemble_db_connection(cls, v: Optional[str], info: Any) -> Any:
+    def assemble_db_connection(cls, v: str | None, info: Any) -> Any:
         if isinstance(v, str) and v:
             return v
-            
+
         data = info.data
         user = data.get("POSTGRES_USER")
         password = data.get("POSTGRES_PASSWORD")
         server = data.get("POSTGRES_SERVER")
         port = data.get("POSTGRES_PORT")
         db = data.get("POSTGRES_DB")
-        
+
         return f"postgresql+asyncpg://{user}:{password}@{server}:{port}/{db}"
 
     # Redis Settings
@@ -73,7 +75,7 @@ class Settings(BaseSettings):
 
     # LLM Settings & Provider Abstraction
     LLM_PROVIDER: str = "nvidia"
-    NVIDIA_API_KEY: Optional[str] = None
+    NVIDIA_API_KEY: str | None = None
     NVIDIA_BASE_URL: str = "https://integrate.api.nvidia.com/v1"
     NVIDIA_MODEL: str = "nvidia/nemotron-3-ultra-550b-a55b"
     NVIDIA_REASONING_EFFORT: str = "high"  # none | medium | high
@@ -88,10 +90,10 @@ class Settings(BaseSettings):
     AI_MAX_RECENT_MESSAGES: int = 20
 
     # Legacy External APIs (kept for backwards compatibility)
-    GROQ_API_KEY: Optional[str] = None
+    GROQ_API_KEY: str | None = None
     GROQ_MODEL: str = "llama-3.3-70b-versatile"
-    TAVILY_API_KEY: Optional[str] = None
-    DEEPGRAM_API_KEY: Optional[str] = None
+    TAVILY_API_KEY: str | None = None
+    DEEPGRAM_API_KEY: str | None = None
 
     # NextJS
     NEXT_PUBLIC_API_URL: str = "http://localhost/api/v1"

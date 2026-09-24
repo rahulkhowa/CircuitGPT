@@ -1,12 +1,12 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 
-class DocumentChunk(Dict[str, Any]):
+class DocumentChunk(dict[str, Any]):
     chunk_id: str
     text: str
     chunk_index: int
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 class DocumentProcessor:
@@ -18,12 +18,12 @@ class DocumentProcessor:
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
 
-    def process_text(self, text: str, file_name: str, extra_metadata: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def process_text(self, text: str, file_name: str, extra_metadata: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         """
         Splits text string into overlapping chunks.
         """
         words = text.split()
-        chunks: List[Dict[str, Any]] = []
+        chunks: list[dict[str, Any]] = []
 
         if not words:
             return chunks

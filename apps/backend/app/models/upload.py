@@ -1,8 +1,11 @@
-import uuid
 import enum
-from typing import Optional, TYPE_CHECKING
-from sqlalchemy import String, BigInteger, ForeignKey, Enum as SAEnum
+import uuid
+from typing import TYPE_CHECKING
+
+from sqlalchemy import BigInteger, ForeignKey, String
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.models.base import BaseModel
 
 if TYPE_CHECKING:
@@ -44,7 +47,7 @@ class Upload(BaseModel):
     original_name: Mapped[str] = mapped_column(String(512), nullable=False)   # user-facing name
     filename: Mapped[str] = mapped_column(String(512), nullable=False)         # stored filename (uuid-based)
     mime_type: Mapped[str] = mapped_column(String(128), nullable=False)
-    file_size_bytes: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    file_size_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     minio_key: Mapped[str] = mapped_column(String(1024), nullable=False)       # MinIO object key
     status: Mapped[UploadStatus] = mapped_column(
         SAEnum(UploadStatus, name="uploadstatus", values_callable=lambda x: [e.value for e in x]),

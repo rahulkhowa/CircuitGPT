@@ -1,12 +1,10 @@
-from typing import List
-from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db, require_admin
 from app.models.user import User
-from app.schemas.user import UserResponse, UserUpdate, PasswordChange, MessageResponse
+from app.schemas.user import MessageResponse, PasswordChange, UserResponse, UserUpdate
 from app.services.user import UserService
 
 router = APIRouter()
@@ -42,7 +40,7 @@ async def change_password(
     return MessageResponse(message="Password successfully updated.")
 
 
-@router.get("", response_model=List[UserResponse], dependencies=[Depends(require_admin)])
+@router.get("", response_model=list[UserResponse], dependencies=[Depends(require_admin)])
 async def list_all_users(
     skip: int = 0,
     limit: int = 50,

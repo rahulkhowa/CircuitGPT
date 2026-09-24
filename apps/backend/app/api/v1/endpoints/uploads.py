@@ -9,19 +9,17 @@ Routes:
   DELETE /api/v1/uploads/{id}          – delete own resource from MinIO + DB
 """
 
-import io
 import mimetypes
 import os
 from uuid import UUID, uuid4
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
-from app.core.config import settings
 from app.core.cache import cache_service
+from app.core.config import settings
 from app.models.upload import ResourceType, Upload
 from app.models.user import User
 from app.repositories.upload import UploadRepository
@@ -73,7 +71,7 @@ def _validate_file(resource_type: ResourceType, filename: str, size_bytes: int) 
 # Pydantic schemas
 # ──────────────────────────────────────────────
 
-from app.models.upload import ResourceType, Upload, UploadStatus
+from app.models.upload import ResourceType, UploadStatus
 from app.services.rag.pipeline import RAGPipeline
 
 rag_pipeline = RAGPipeline()
@@ -88,7 +86,7 @@ class UploadOut(BaseModel):
     resource_type: ResourceType
     original_name: str
     mime_type: str
-    file_size_bytes: Optional[int]
+    file_size_bytes: int | None
     status: UploadStatus
     created_at: str
 
@@ -121,7 +119,7 @@ async def upload_resource(
     contents = await file.read()
     original_name = file.filename or "file"
     ext = os.path.splitext(original_name)[-1].lower()
-    
+
     mime_type = file.content_type
     if not mime_type or mime_type == "application/octet-stream":
         guessed, _ = mimetypes.guess_type(original_name)
@@ -143,7 +141,7 @@ async def upload_resource(
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"Failed to store file: {exc}",
-        )
+        ) from exc
 
     # 2. Persist metadata to PostgreSQL in PROCESSING state
     try:
@@ -169,7 +167,7 @@ async def upload_resource(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to save resource metadata: {exc}",
-        )
+        ) from exc
 
     # 3. Automatic System RAG Ingestion
     try:
@@ -185,6 +183,7 @@ async def upload_resource(
             if ext_lower == ".pdf":
                 try:
                     import io
+
                     import pypdf
                     reader = pypdf.PdfReader(io.BytesIO(contents))
                     pages = [page.extract_text() for page in reader.pages if page.extract_text()]
@@ -208,7 +207,7 @@ async def upload_resource(
                 resource_type=resource_type.value,
                 resource_id=str(upload.id),
             )
-        
+
         upload.status = UploadStatus.INDEXED
         await db.commit()
         await db.refresh(upload)
@@ -233,10 +232,10 @@ async def upload_resource(
     )
 
 
-@router.get("", response_model=List[UploadOut])
+@router.get("", response_model=list[UploadOut])
 async def list_resources(
-    subject_id: Optional[str] = None,
-    resource_type: Optional[ResourceType] = None,
+    subject_id: str | None = None,
+    resource_type: ResourceType | None = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
