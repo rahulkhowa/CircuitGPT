@@ -39,6 +39,8 @@ ignore = [
     "B905",  # zip() without strict= — not critical for internal usage
     "C408",  # dict() literal rewrite — cosmetic only
     "E402",  # Module level import not at top — conftest setup ordering
+    "E711",  # SQLAlchemy ORM requires `== None` (not `is None`) for IS NULL filters
+    "UP046", # Generic[T] base class pattern — used for SQLAlchemy type-safe repositories
 ]
 exclude = [
     "alembic",

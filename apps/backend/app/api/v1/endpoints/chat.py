@@ -137,7 +137,7 @@ async def chat_with_ai(
         stmt = (
             select(Memory)
             .where(Memory.user_id == current_user.id)
-            .where((Memory.system_id == system_id) | (Memory.system_id is None))
+            .where((Memory.system_id == system_id) | (Memory.system_id == None))  # noqa: E711
             .limit(settings.AI_MEMORY_TOP_K)
         )
         mem_res = await db.execute(stmt)
@@ -232,7 +232,7 @@ async def chat_stream_with_ai(
         stmt = (
             select(Memory)
             .where(Memory.user_id == current_user.id)
-            .where((Memory.system_id == system_id) | (Memory.system_id is None))
+            .where((Memory.system_id == system_id) | (Memory.system_id == None))  # noqa: E711
             .limit(settings.AI_MEMORY_TOP_K)
         )
         mem_res = await db.execute(stmt)
