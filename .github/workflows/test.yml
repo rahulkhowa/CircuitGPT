@@ -21,6 +21,9 @@ jobs:
           pip install -r requirements.txt -r requirements-dev.txt
           pip install aiosqlite pytest pytest-asyncio httpx
       - name: Run Pytest Suite
+        env:
+          PYTHONPATH: .
+          SECRET_KEY: circuitgpt-test-secret-key-32chars-minimum
         run: |
           cd apps/backend
           pytest -v
@@ -38,7 +41,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd apps/frontend
-          npm ci
+          npm ci --legacy-peer-deps
       - name: Build Next.js
         run: |
           cd apps/frontend

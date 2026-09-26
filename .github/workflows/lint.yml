@@ -36,7 +36,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd apps/frontend
-          npm ci
+          npm ci --legacy-peer-deps
       - name: Lint Next.js
         run: |
           cd apps/frontend

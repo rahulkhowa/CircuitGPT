@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "CircuitGPT"
     APP_ENV: str = "development"
     DEBUG: bool = True
-    SECRET_KEY: str
+    SECRET_KEY: str = "circuitgpt-secret-key-development-testing-32chars"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 11520  # 8 days
 
