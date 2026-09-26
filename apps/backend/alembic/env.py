@@ -19,8 +19,8 @@ from app.models import Base  # noqa: F401 - registers all models
 # Alembic Config object (provides access to the .ini file values)
 config = context.config
 
-# Override sqlalchemy.url with our pydantic settings value
-config.set_main_option("sqlalchemy.url", settings.SQLALCHEMY_DATABASE_URI)
+# Override sqlalchemy.url with our pydantic settings value (escape % for configparser)
+config.set_main_option("sqlalchemy.url", settings.SQLALCHEMY_DATABASE_URI.replace("%", "%%"))
 
 # Interpret the config file for Python logging
 if config.config_file_name is not None:
